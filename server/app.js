@@ -1,9 +1,21 @@
 // Require
+require('./config/config');
+
 const express = require('express');
 const mongoose = require('mongoose');
+const bodyParser = require('body-parser');
 
 // Inicializar variables
 const app = express();
+
+// parse application/x-www-form-urlencoded
+app.use(bodyParser.urlencoded({ extended: false }))
+
+// parse application/json
+app.use(bodyParser.json())
+
+// Configuración global de rutas
+app.use(require('./routes/index'));
 
 // Conexión a la base de datos
 mongoose.connection.openUri('mongodb://localhost:27017/hospitalDB', (err, res) => {
@@ -14,16 +26,7 @@ mongoose.connection.openUri('mongodb://localhost:27017/hospitalDB', (err, res) =
 
 });
 
-// Rutas
-app.get('/', (req, res, next) => {
-    res.status(200).json({
-        ok: true,
-        mensaje: 'Petición realizada correctamente'
-    });
-});
-
-
 // Excuchar peticiones
 app.listen(3000, () => {
-    console.log('Express server puerto 3000: \x1b[32m%s\x1b[0m', 'online');
+    console.log('Escuchando puerto: \x1b[32m%s\x1b[0m', 3000, ' online');
 });
