@@ -16,9 +16,9 @@ let hospitalSchema = new Schema({
     usuario: {
         type: Schema.Types.ObjectId,
         ref: 'Usuario',
-        required: [true, 'Asignar un usuario es necesario']
+        required: [true, 'El usuario es necesario']
     }
 
-});
+}, { collection: 'hospitales' });
 
 module.exports = mongoose.model('Hospital', hospitalSchema);

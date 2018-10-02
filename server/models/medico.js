@@ -22,8 +22,11 @@ let medicoSchema = new Schema({
         type: Schema.Types.ObjectId,
         ref: 'Hospital',
         required: [true, 'Asignar un hospital es necesario']
+    },
+    estado: {
+        type: Boolean,
+        default: true
     }
-
 });
 
 module.exports = mongoose.model('Medico', medicoSchema);

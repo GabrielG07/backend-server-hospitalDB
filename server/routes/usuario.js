@@ -10,22 +10,36 @@ const app = express();
 // ==============================================
 // Obtener todos los usuarios
 // ==============================================
-app.get('/usuario', verificaToken, (req, res, next) => {
+app.get('/usuario', (req, res, next) => {
 
-    Usuario.find({}, (err, usuarios) => {
-        if (err) {
-            return res.status(500).json({
-                ok: false,
-                message: 'Error cargando usuarios',
-                err
+    let desde = req.query.desde || 0;
+    desde = Number(desde);
+
+    let limite = req.query.limite || 5;
+    limite = Number(limite);
+
+    Usuario.find({ estado: true }, 'name email role estado google img')
+        .skip(desde)
+        .limit(limite)
+        .exec((err, usuarios) => {
+            if (err) {
+                return res.status(500).json({
+                    ok: false,
+                    err: {
+                        message: 'Error cargando la base de datos',
+                        err
+                    }
+                });
+            }
+
+            Usuario.count({ estado: true }, (err, conteo) => {
+                res.status(200).json({
+                    ok: true,
+                    usuario: usuarios,
+                    total: conteo
+                });
             });
-        }
-
-        res.status(200).json({
-            ok: true,
-            usuario: usuarios
         });
-    });
 
 });
 
@@ -33,7 +47,7 @@ app.get('/usuario', verificaToken, (req, res, next) => {
 // ==============================================
 // Crear un nuevo usuario
 // ==============================================
-app.post('/usuario', (req, res, next) => {
+app.post('/usuario', verificaToken, (req, res, next) => {
 
     let body = req.body;
 
@@ -48,15 +62,17 @@ app.post('/usuario', (req, res, next) => {
         name: body.name,
         email: body.email,
         password: bcrypt.hashSync(body.password, 10),
-        img: body.img,
         role: body.role
     });
 
     usuario.save((err, usuarioDB) => {
         if (err) {
-            return res.status(400).json({
+            return res.status(500).json({
                 ok: false,
-                err
+                err: {
+                    message: 'Error al cargar la base de datos',
+                    err
+                }
             });
         }
 
@@ -71,7 +87,7 @@ app.post('/usuario', (req, res, next) => {
 // ==============================================
 // Actualizar un usuario
 // ==============================================
-app.put('/usuario/:id', (req, res, next) => {
+app.put('/usuario/:id', verificaToken, (req, res, next) => {
 
     let id = req.params.id;
 
@@ -82,7 +98,8 @@ app.put('/usuario/:id', (req, res, next) => {
             return res.status(500).json({
                 ok: false,
                 err: {
-                    message: 'Error al buscar usuario'
+                    message: 'Error cargando la base de datos',
+                    err
                 }
             });
         }
@@ -107,16 +124,21 @@ app.put('/usuario/:id', (req, res, next) => {
 // ==============================================
 // Eliminar un usuario
 // ==============================================
-app.delete('/usuario/:id', (req, res, next) => {
+app.delete('/usuario/:id', verificaToken, (req, res, next) => {
 
     let id = req.params.id;
 
-    Usuario.findByIdAndRemove(id, (err, usuarioDelete) => {
+    let newEstado = {
+        estado: false
+    }
+
+    Usuario.findByIdAndUpdate(id, newEstado, { new: true }, (err, usuarioDelete) => {
         if (err) {
             return res.status(500).json({
                 ok: false,
                 err: {
-                    message: 'Error al buscar usuario'
+                    message: 'Error cargando la base de datos',
+                    err
                 }
             });
         }
@@ -125,7 +147,8 @@ app.delete('/usuario/:id', (req, res, next) => {
             return res.status(400).json({
                 ok: false,
                 err: {
-                    message: 'Usuario no encontrado'
+                    message: 'Usuario no encontrado',
+                    err
                 }
             });
         }
